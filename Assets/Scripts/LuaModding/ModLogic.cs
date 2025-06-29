@@ -38,7 +38,7 @@ public class ModLogic
         script.Globals["Events"] = new EventsAPI();
 
         script.Globals["print"] = (Action<string>)(s => Debug.Log($"[{modInfo.Name}] {s}"));
-        script.Globals["require"] = (Func<string, DynValue>) moduleExecute;
+        //script.Globals["require"] = (Func<string, DynValue>) moduleExecute;
 
         script.Options.CheckThreadAccess = false;
         script.Options.DebugPrint = s => Debug.Log($"[LuaDebug] {s}");
