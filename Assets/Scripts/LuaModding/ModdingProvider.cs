@@ -1,14 +1,21 @@
+using MoonSharp.Interpreter;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 public class ModdingProvider : MonoBehaviour
 {
+    public static ModdingProvider Instance { get; private set; }
+
     public List<ModLogic> Mods = new List<ModLogic>();
 
     private void Awake()
     {
+        Instance = this;
+
         try
         {
             string[] dirs = Directory.GetDirectories(Path.Combine(Application.dataPath, "Mods"), "*", SearchOption.TopDirectoryOnly);
@@ -35,5 +42,28 @@ public class ModdingProvider : MonoBehaviour
         {
             mod.Emit("GameStart");
         }
+    }
+
+    public async UniTask<DynValue> ExecuteWithTimeout(DynValue coroutine, float maxSeconds)
+    {
+        MoonSharp.Interpreter.Coroutine luaCoroutine = coroutine.Coroutine;
+
+        float startTime = Time.realtimeSinceStartup;
+
+        while (luaCoroutine.State != CoroutineState.Dead)
+        {
+            luaCoroutine.Resume();
+
+            float elapsed = Time.realtimeSinceStartup - startTime;
+            if (elapsed > maxSeconds)
+            {
+                Debug.LogError("Lua-скрипт превысил лимит времени и был остановлен");
+                return null;
+            }
+
+            await UniTask.Yield();
+        }
+
+        return coroutine;
     }
 }

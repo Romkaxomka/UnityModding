@@ -6,18 +6,19 @@ using System;
 using System.IO;
 using YamlDotNet.Serialization.NamingConventions;
 using YamlDotNet.Serialization;
+using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 public class ModLogic
 {
-    private string folderPath;
     private Script script;
     
     public ModInfo modInfo { get; private set; }
 
+    Dictionary<string, DynValue> moduleCache = new Dictionary<string, DynValue>();
+
     public ModLogic(string folderPath)
     {
-        this.folderPath = folderPath;
-
         var deserializerYaml = new DeserializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .Build();
@@ -37,13 +38,17 @@ public class ModLogic
         script.Globals["Events"] = new EventsAPI();
 
         script.Globals["print"] = (Action<string>)(s => Debug.Log($"[{modInfo.Name}] {s}"));
-        script.Globals["require"] = (Func<string, DynValue>)((moduleName) =>
-        {
-            var path = moduleName + ".lua";
-            return script.DoFile(path);
-        });
+        //script.Globals["require"] = (Func<string, DynValue>)((moduleName) =>
+        //{
+        //    if (moduleCache.TryGetValue(moduleName, out var cached))
+        //        return cached;
 
-        //script.Options.ExecutionTimeoutMilliseconds = 100;
+        //    var path = moduleName.Replace('.', Path.DirectorySeparatorChar) + ".lua";
+        //    var result = script.DoFile(path);
+        //    moduleCache[moduleName] = result;
+        //    return result;
+        //});
+
         script.Options.CheckThreadAccess = false;
         script.Options.DebugPrint = s => Debug.Log($"[LuaDebug] {s}");
     }
@@ -52,7 +57,15 @@ public class ModLogic
     {
         try
         {
-            script.DoFile("init.lua");
+            var initFunction = @$"
+            return function()
+                {script.Options.ScriptLoader.LoadFile("init.lua", null)}
+            end
+            ";
+
+            DynValue entry = script.DoString(initFunction);
+            DynValue coroutine = script.CreateCoroutine(entry);
+            ModdingProvider.Instance.ExecuteWithTimeout(coroutine, 0.5f).Forget();
         }
         catch (Exception exp)
         {
