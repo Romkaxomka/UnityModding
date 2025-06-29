@@ -39,7 +39,7 @@ public class MyScriptLoader : ScriptLoaderBase
         relativePath = relativePath.Replace("/", "");
         relativePath = relativePath.Replace("\\", "");
 
-        //string rawPath = relativePath.Replace('/', Path.DirectorySeparatorChar);
+        //relativePath = relativePath.Replace('/', Path.DirectorySeparatorChar);
 
         string combinedPath = Path.Combine(basePath, relativePath);
         string fullPath = Path.GetFullPath(combinedPath);

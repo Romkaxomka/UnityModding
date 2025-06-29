@@ -1,9 +1,6 @@
-﻿using MoonSharp.Interpreter;
-using System;
+﻿using Cysharp.Threading.Tasks;
+using MoonSharp.Interpreter;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace APIs
 {
@@ -23,7 +20,11 @@ namespace APIs
             if (handlers.TryGetValue(eventName, out var list))
             {
                 foreach (var fn in list)
-                    fn.Call();
+                {
+                    Script script = fn.OwnerScript;
+                    DynValue coroutine = script.CreateCoroutine(fn);
+                    ModdingProvider.Instance.ExecuteWithTimeout(coroutine, 0.5f).Forget();
+                }
             }
         }
     }

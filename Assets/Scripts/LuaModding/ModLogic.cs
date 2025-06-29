@@ -38,19 +38,21 @@ public class ModLogic
         script.Globals["Events"] = new EventsAPI();
 
         script.Globals["print"] = (Action<string>)(s => Debug.Log($"[{modInfo.Name}] {s}"));
-        //script.Globals["require"] = (Func<string, DynValue>)((moduleName) =>
-        //{
-        //    if (moduleCache.TryGetValue(moduleName, out var cached))
-        //        return cached;
-
-        //    var path = moduleName.Replace('.', Path.DirectorySeparatorChar) + ".lua";
-        //    var result = script.DoFile(path);
-        //    moduleCache[moduleName] = result;
-        //    return result;
-        //});
+        script.Globals["require"] = (Func<string, DynValue>) moduleExecute;
 
         script.Options.CheckThreadAccess = false;
         script.Options.DebugPrint = s => Debug.Log($"[LuaDebug] {s}");
+    }
+
+    private DynValue moduleExecute(string moduleName)
+    {
+        if (moduleCache.TryGetValue(moduleName, out var cached))
+            return cached;
+
+        var path = moduleName.Replace('.', Path.DirectorySeparatorChar) + ".lua";
+        var result = script.DoFile(path);
+        moduleCache[moduleName] = result;
+        return result;
     }
 
     public void Init()
