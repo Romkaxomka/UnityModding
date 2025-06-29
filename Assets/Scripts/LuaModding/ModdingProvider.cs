@@ -12,13 +12,15 @@ public class ModdingProvider : MonoBehaviour
 
     public List<ModLogic> Mods = new List<ModLogic>();
 
+    private string basePath => Path.Combine(Application.streamingAssetsPath, "Mods");
+
     private void Awake()
     {
         Instance = this;
 
         try
         {
-            string[] dirs = Directory.GetDirectories(Path.Combine(Application.dataPath, "Mods"), "*", SearchOption.TopDirectoryOnly);
+            string[] dirs = Directory.GetDirectories(basePath, "*", SearchOption.TopDirectoryOnly);
 
             foreach (string dir in dirs)
             {
